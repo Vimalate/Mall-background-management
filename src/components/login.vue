@@ -6,10 +6,10 @@
         <img src="../assets/logo.png" alt />
       </div>
       <!-- 登录表单区域 -->
-      <el-form class="login_from" :model="loginFrom" :rules="loginRules" ref="loginFrom">
+      <el-form class="login_from" :model="loginFrom" :rules="loginRules" ref="loginFromRef">
         <!-- 用户民 -->
         <el-form-item prop="username">
-          <el-input v-model="loginFrom.username" prefix-icon="iconfont icon-user  
+          <el-input v-model="loginFrom.username" prefix-icon="iconfont icon-user
 "></el-input>
         </el-form-item>
         <!-- 密码 -->
@@ -32,31 +32,40 @@
 
 <script>
 export default {
-  data () {
+  data() {
     return {
       // 登录保单
       loginFrom: {
-        ueername: "",
-        password: "123456"
+        ueername: '',
+        password: '123456'
       },
       loginRules: {
         username: [
-          { required: true, message: "请输入用户名", trigger: "blur" },
-          { min: 3, max: 10, message: "长度在 3 到 10 个字符", trigger: "blur" }
+          { required: true, message: '请输入用户名', trigger: 'blur' },
+          { min: 3, max: 10, message: '长度在 3 到 10 个字符', trigger: 'blur' }
         ],
         password: [
-          { required: true, message: "请输入用户名", trigger: "blur" },
-          { min: 6, max: 15, message: "长度在 6 到 15 个字符", trigger: "blur" }
+          { required: true, message: '请输入用户名', trigger: 'blur' },
+          { min: 6, max: 15, message: '长度在 6 到 15 个字符', trigger: 'blur' }
         ]
       }
     }
   },
   methods: {
-    restLoginFrom () {
+    restLoginFrom() {
       this.$refs.loginFrom.resetFields()
     },
-    login () {
-      this.$refs.loginFrom.validate()
+    login() {
+      this.$refs.loginFromRef.validate(async valid => {
+        if (!valid) return
+        const { data: res } = await this.$http.post('login', this.loginFrom)
+        if (res.meta.status !== 200) return this.$message.error('登录失败！')
+        this.$message.success('登录成功！')
+        window.sessionStorage.setItem('token', res.data.token)
+        // 跳转登录
+        this.$router.push('/home')
+        console.log(res)
+      })
     }
   }
 }
