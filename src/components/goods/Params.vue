@@ -34,7 +34,36 @@
           >添加参数</el-button>
           <el-table :data="manyData" stripe border>
             <!-- 展开行 -->
-            <el-table-column type="expand"></el-table-column>
+            <el-table-column type="expand">
+              <el-table-column type="expand">
+                <!-- 循环渲染tag标签 -->
+                <template slot-scope="scope">
+                  <el-tag
+                    v-for="(item,index) in scope.row.attr_vals"
+                    :key="index"
+                    closable
+                    @close="handleClose(index,scope.row)"
+                  >{{item}}</el-tag>
+                  <!-- 输入文本框 -->
+                  <el-input
+                    class="input-new-tag"
+                    v-if="scope.row.inputVisible"
+                    v-model="scope.row.inputValue"
+                    ref="saveTagInput"
+                    size="small"
+                    @keyup.enter.native="handleInputConfirm(scope.row)"
+                    @blur="handleInputConfirm(scope.row)"
+                  ></el-input>
+                  <!-- 添加按钮 -->
+                  <el-button
+                    v-else
+                    class="button-new-tag"
+                    size="small"
+                    @click="showInput(scope.row)"
+                  >+ 添加</el-button>
+                </template>
+              </el-table-column>
+            </el-table-column>
             <!-- 索引列 -->
             <el-table-column type="index"></el-table-column>
             <el-table-column label="参数名称" prop="attr_name"></el-table-column>
@@ -46,7 +75,12 @@
                   size="mini"
                   @click="showEditDialog(scope.row.attr_id)"
                 >编辑</el-button>
-                <el-button type="danger" icon="el-icon-delete" size="mini" @click="deleteParams(scope.row.attr_id)">删除</el-button>
+                <el-button
+                  type="danger"
+                  icon="el-icon-delete"
+                  size="mini"
+                  @click="deleteParams(scope.row.attr_id)"
+                >删除</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -61,7 +95,36 @@
           <!-- 静态属性表格 -->
           <el-table :data="onlyData" stripe border>
             <!-- 展开行 -->
-            <el-table-column type="expand"></el-table-column>
+              <el-table-column type="expand">
+              <el-table-column type="expand">
+                <!-- 循环渲染tag标签 -->
+                <template slot-scope="scope">
+                  <el-tag
+                    v-for="(item,index) in scope.row.attr_vals"
+                    :key="index"
+                    closable
+                    @close="handleClose(index,scope.row)"
+                  >{{item}}</el-tag>
+                  <!-- 输入文本框 -->
+                  <el-input
+                    class="input-new-tag"
+                    v-if="scope.row.inputVisible"
+                    v-model="scope.row.inputValue"
+                    ref="saveTagInput"
+                    size="small"
+                    @keyup.enter.native="handleInputConfirm(scope.row)"
+                    @blur="handleInputConfirm(scope.row)"
+                  ></el-input>
+                  <!-- 添加按钮 -->
+                  <el-button
+                    v-else
+                    class="button-new-tag"
+                    size="small"
+                    @click="showInput(scope.row)"
+                  >+ 添加</el-button>
+                </template>
+              </el-table-column>
+            </el-table-column>
             <!-- 索引列 -->
             <el-table-column type="index"></el-table-column>
             <el-table-column label="参数名称" prop="attr_name"></el-table-column>
@@ -73,7 +136,12 @@
                   size="mini"
                   @click="showEditDialog(scope.row.attr_id)"
                 >编辑</el-button>
-                <el-button type="danger" icon="el-icon-delete" size="mini" @click="deleteParams(scope.row.attr_id)">删除</el-button>
+                <el-button
+                  type="danger"
+                  icon="el-icon-delete"
+                  size="mini"
+                  @click="deleteParams(scope.row.attr_id)"
+                >删除</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -188,7 +256,7 @@ export default {
         return this.$message.error('获取商品分类失败！')
       }
       this.cateList = res.data
-      console.log(this.cateList)
+      // console.log(this.cateList)
     },
     handleChange() {
       this.getparams()
@@ -220,6 +288,9 @@ export default {
       // 选中的不是三级id
       if (this.selectedCateKeys.length !== 3) {
         this.selectedCateKeys = []
+        this.manyData = []
+        this.onlyData = []
+        return
       }
       // 选中的是三级id
       const { data: res } = await this.$http.get(
@@ -229,6 +300,13 @@ export default {
       if (res.meta.status !== 200) {
         return this.$message.error('获取参数列表失败！')
       }
+      res.data.forEach(item => {
+        item.attr_vals = item.attr_vals ? item.attr_vals.split(' ') : []
+        // 控制文本框与添加按钮切换
+        item.inputVisible = false
+        item.inputValue = ''
+      })
+      console.log(res.data)
       this.activeName === 'many'
         ? (this.manyData = res.data)
         : (this.onlyData = res.data)
@@ -275,22 +353,65 @@ export default {
     },
     // 删除当前参数信息
     async deleteParams(id) {
-      const result = await this.$confirm('此操作将永久删除该文件, 是否继续?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning' }).catch(err => err)
+      const result = await this.$confirm(
+        '此操作将永久删除该文件, 是否继续?',
+        '提示',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
+      ).catch(err => err)
 
       // 用户取消操作
       if (result !== 'confirm') {
         return this.$message.info('已取消操作！')
       }
       // 确认删除
-      const { data: res } = await this.$http.delete(`categories/${this.cateId}/attributes/${id}`)
+      const { data: res } = await this.$http.delete(
+        `categories/${this.cateId}/attributes/${id}`
+      )
       if (res.meta.status !== 200) {
         return this.$message.error('删除失败！')
       }
       this.$message.success('删除成功！')
       this.getparams()
+    },
+    // 失去焦点或按下 enter触发
+    async handleInputConfirm(row) {
+      // 输入为空格或无意义
+      if (row.inputValue.trim().length === 0) {
+        row.inputValue = ''
+        row.inputVisible = false
+        // 必须return出去，否则会添加新的一项 ''
+        return
+      }
+      // 否则输入的数据需进行处理
+      row.attr_vals.push(row.inputValue.trim())
+      // 重置为空，恢复可添加按钮
+      row.inputValue = ''
+      row.inputVisible = false
+      // 发起请求，保存到数据库
+      this.saveAttrVals(row)
+    },
+    // 显示 按钮
+    showInput(row) {
+      row.inputVisible = true
+      this.$nextTick(_ => {
+        this.$refs.saveTagInput.$refs.input.focus()
+      })
+    },
+    async saveAttrVals(row) {
+      const { data: res } = await this.$http.put(`categories/${this.cateId}/attributes/${row.attr_id}`, { attr_name: row.attr_name, attr_sel: row.attr_sel, attr_vals: row.attr_vals.join(' ') })
+      if (res.meta.status !== 200) {
+        return this.$message.error('添加参数失败！')
+      }
+      this.$message.success('添加参数成功！')
+    },
+    // 删除这一项
+    handleClose(index, row) {
+      row.attr_vals.splice(index, 1)
+      this.saveAttrVals(row)
     }
 
   },
@@ -321,5 +442,11 @@ export default {
 <style lang='less' scoped>
 .cat_opt {
   margin: 15px 0;
+}
+.el-tag {
+  margin: 8px;
+}
+.input-new-tag {
+  width: 150px;
 }
 </style>
