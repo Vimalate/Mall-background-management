@@ -6,14 +6,14 @@ import './assets/css/global.css'
 import './assets/fonts/iconfont.css'
 import axios from 'axios'
 import TreeTable from 'vue-table-with-tree-grid'
-
+import _ from 'lodash'
 import VueQuillEditor from 'vue-quill-editor'
-
 // require styles
 import 'quill/dist/quill.core.css'
 import 'quill/dist/quill.snow.css'
 import 'quill/dist/quill.bubble.css'
 
+Vue.prototype._ = _
 Vue.prototype.$http = axios
 // 请求根路径
 axios.defaults.baseURL = 'http://127.0.0.1:8888/api/private/v1/'
